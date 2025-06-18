@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "1033123851975",
+    "firebase_url": "https://sippure-4d8eb-default-rtdb.firebaseio.com",
+    "project_id": "sippure-4d8eb",
+    "storage_bucket": "sippure-4d8eb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1033123851975:android:2c233dd57c0ed183e258e2",
+        "android_client_info": {
+          "package_name": "com.example.sippure"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASIJv_wDPhjrcXvI3ySvTe4VUICwKyPKI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

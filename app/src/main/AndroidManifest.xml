@@ -97,7 +97,7 @@
         <activity
             android:name=".view.ForgetPasswordActivity"
             android:exported="true"
-            android:label="@string/title_activity_login"
+            android:label="ForgetPasswordActivity"
             android:theme="@style/Theme.Sippure">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

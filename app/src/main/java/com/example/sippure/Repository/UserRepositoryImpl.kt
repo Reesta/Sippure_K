@@ -1,34 +1,43 @@
 import com.example.sippure.UserRepository
 import com.example.sippure.model.UserModel
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException // Import for specific error handling
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import android.util.Log // For logging
 
+class UserRepositoryImpl : UserRepository {
 
-class UserRepositoryImpl: UserRepository {
-    val auth : FirebaseAuth = FirebaseAuth.getInstance()
+    // Constants for database nodes
+    companion object {
+        private const val TAG = "UserRepositoryImpl" // For logging
+        private const val USERS_NODE = "Users"
+    }
 
-    val database : FirebaseDatabase = FirebaseDatabase.getInstance()
-
-    val ref : DatabaseReference = database.reference.child("Users")
+    val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    val database: FirebaseDatabase = FirebaseDatabase.getInstance()
+    val ref: DatabaseReference = database.reference.child(USERS_NODE)
 
     override fun login(
         email: String,
         password: String,
         callback: (Boolean, String) -> Unit
     ) {
-       auth.signInWithEmailAndPassword(email,password)
-           .addOnCompleteListener {
-               if (it.isSuccessful) {
-                   callback(true,"Login successfully")
-               } else{
-                   callback(false,"${it.exception?.message}")
-
-               }
-           }
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG, "Login successful for email: $email")
+                    callback(true, "Login successfully")
+                } else {
+                    val errorMessage = task.exception?.message ?: "An unknown error occurred during login."
+                    Log.e(TAG, "Login failed for email: $email - Error: $errorMessage", task.exception)
+                    callback(false, errorMessage)
+                }
+            }
     }
 
     override fun register(
@@ -36,32 +45,43 @@ class UserRepositoryImpl: UserRepository {
         password: String,
         callback: (Boolean, String, String) -> Unit
     ) {
-        auth.createUserWithEmailAndPassword(email,password)
-            .addOnCompleteListener {
-                if (it.isSuccessful) {
-                    callback(true,"Registered successfully",
-                        "${auth.currentUser?.uid}")
-                } else{
-                    callback(false,"${it.exception?.message}",
-                        "")
-
+        auth.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val userId = auth.currentUser?.uid
+                    Log.d(TAG, "Registration successful for email: $email, User ID: $userId")
+                    callback(true, "Registered successfully", userId ?: "")
+                } else {
+                    val errorMessage = task.exception?.message ?: "An unknown error occurred during registration."
+                    Log.e(TAG, "Registration failed for email: $email - Error: $errorMessage", task.exception)
+                    // Optional: More specific error messages for FirebaseAuthException
+                    if (task.exception is FirebaseAuthException) {
+                        when ((task.exception as FirebaseAuthException).errorCode) {
+                            "ERROR_WEAK_PASSWORD" -> callback(false, "Password is too weak. Please choose a stronger one.", "")
+                            "ERROR_INVALID_EMAIL" -> callback(false, "The email address is not valid.", "")
+                            "ERROR_EMAIL_ALREADY_IN_USE" -> callback(false, "This email address is already registered.", "")
+                            else -> callback(false, errorMessage, "")
+                        }
+                    } else {
+                        callback(false, errorMessage, "")
+                    }
                 }
             }
     }
-//Create
+
     override fun addUserToDatabase(
         userId: String,
         model: UserModel,
         callback: (Boolean, String) -> Unit
     ) {
-    ref.child(userId).setValue(model).addOnCompleteListener {
-
-
-            if (it.isSuccessful) {
-                callback(true,"User added")
-            } else{
-                callback(false,"${it.exception?.message}")
-
+        ref.child(userId).setValue(model).addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                Log.d(TAG, "User data added for user ID: $userId")
+                callback(true, "User added")
+            } else {
+                val errorMessage = task.exception?.message ?: "An unknown error occurred while adding user data."
+                Log.e(TAG, "Failed to add user data for user ID: $userId - Error: $errorMessage", task.exception)
+                callback(false, errorMessage)
             }
         }
     }
@@ -71,14 +91,14 @@ class UserRepositoryImpl: UserRepository {
         data: MutableMap<String, Any?>,
         callback: (Boolean, String) -> Unit
     ) {
-        ref.child(userId).updateChildren(data).addOnCompleteListener {
-
-
-            if (it.isSuccessful) {
-                callback(true,"User updated")
-            } else{
-                callback(false,"${it.exception?.message}")
-
+        ref.child(userId).updateChildren(data).addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                Log.d(TAG, "User profile updated for user ID: $userId")
+                callback(true, "User updated")
+            } else {
+                val errorMessage = task.exception?.message ?: "An unknown error occurred while updating profile."
+                Log.e(TAG, "Failed to update profile for user ID: $userId - Error: $errorMessage", task.exception)
+                callback(false, errorMessage)
             }
         }
     }
@@ -88,12 +108,14 @@ class UserRepositoryImpl: UserRepository {
         callback: (Boolean, String) -> Unit
     ) {
         auth.sendPasswordResetEmail(email)
-            .addOnCompleteListener {
-                if (it.isSuccessful) {
-                    callback(true,"Reset email sent to the $email")
-                } else{
-                    callback(false,"${it.exception?.message}")
-
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG, "Password reset email sent to: $email")
+                    callback(true, "Reset email sent to $email")
+                } else {
+                    val errorMessage = task.exception?.message ?: "An unknown error occurred while sending reset email."
+                    Log.e(TAG, "Failed to send password reset email to: $email - Error: $errorMessage", task.exception)
+                    callback(false, errorMessage)
                 }
             }
     }
@@ -106,29 +128,41 @@ class UserRepositoryImpl: UserRepository {
         userId: String,
         callback: (UserModel?, Boolean, String) -> Unit
     ) {
-        ref.child(userId).addValueEventListener(object : ValueEventListener {
+        // Using addListenerForSingleValueEvent for a single fetch.
+        // If you need real-time updates, use addValueEventListener and manage its lifecycle.
+        ref.child(userId).addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (snapshot.exists()) {
-                    val Users = snapshot.getValue(UserModel::class.java)
-                    if (Users != null) {
-                        callback(Users, true, "data fetched")
+                    val userModel = snapshot.getValue(UserModel::class.java)
+                    if (userModel != null) {
+                        Log.d(TAG, "User data fetched successfully for ID: $userId")
+                        callback(userModel, true, "Data fetched successfully")
+                    } else {
+                        Log.w(TAG, "User data exists but is malformed or null for ID: $userId")
+                        callback(null, false, "User data is null or malformed")
                     }
+                } else {
+                    Log.d(TAG, "User does not exist for ID: $userId")
+                    callback(null, false, "User does not exist")
                 }
             }
 
-            override fun onCancelled(error: com.google.firebase.database.DatabaseError) {
+            override fun onCancelled(error: DatabaseError) {
+                Log.e(TAG, "Database operation cancelled for ID: $userId - Error: ${error.message}", error.toException())
                 callback(null, false, error.message)
             }
         })
     }
 
-            override fun logout(callback: (Boolean, String) -> Unit) {
-                try {
-                    auth.signOut()
-                    callback(true,"logout successfully")
-                }catch (e: Exception){
-                    callback(false,"${e.message}")
-
-                }
+    override fun logout(callback: (Boolean, String) -> Unit) {
+        try {
+            auth.signOut()
+            Log.d(TAG, "User logged out successfully.")
+            callback(true, "logout successfully")
+        } catch (e: Exception) {
+            val errorMessage = e.message ?: "An unknown error occurred during logout."
+            Log.e(TAG, "Logout failed - Error: $errorMessage", e)
+            callback(false, errorMessage)
+        }
     }
 }

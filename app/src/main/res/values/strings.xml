@@ -6,4 +6,8 @@
     <string name="title_activity_navigation">NavigationActivity</string>
     <string name="title_activity_add_product">AddProductActivity</string>
     <string name="title_activity_update_product">UpdateProductActivity</string>
+    <string name="title_activity_favourite">FavouriteActivity</string>
+    <string name="title_activity_search">SearchActivity</string>
+    <string name="title_activity_profile">ProfileActivity</string>
+    <string name="title_activity_teadetail">TeadetailActivity</string>
 </resources>

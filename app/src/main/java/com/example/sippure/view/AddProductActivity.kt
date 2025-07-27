@@ -2,6 +2,7 @@ package com.example.sippure.view
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent // Import Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -21,6 +22,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.ArrowBack // Import ArrowBack icon
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
@@ -50,7 +52,7 @@ import com.example.sippure.Repository.ProductRepositoryImpl
 import com.example.sippure.Utils.ImageUtils
 import com.example.sippure.model.ProductModel
 import com.example.sippure.viewmodel.ProductViewModel
-import com.example.sippure.ui.theme.SippureTheme // Assuming your theme is here
+import com.example.sippure.ui.theme.SippureTheme
 
 class AddProductActivity : ComponentActivity() {
     lateinit var imageUtils: ImageUtils
@@ -64,8 +66,8 @@ class AddProductActivity : ComponentActivity() {
             selectedImageUri = uri
         }
         setContent {
-            SippureTheme { // Apply your theme here for consistency
-                AddProductBody(
+            SippureTheme {
+                AddProductScreen(
                     selectedImageUri = selectedImageUri,
                     onPickImage = { imageUtils.launchImagePicker() }
                 )
@@ -76,7 +78,7 @@ class AddProductActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddProductBody(
+fun AddProductScreen(
     selectedImageUri: Uri?,
     onPickImage: () -> Unit
 ) {
@@ -84,14 +86,12 @@ fun AddProductBody(
     var productPrice by remember { mutableStateOf("") }
     var productDescription by remember { mutableStateOf("") }
 
-    // Using remember to ensure ViewModel is not recreated on recomposition
     val repo = remember { ProductRepositoryImpl() }
     val viewModel = remember { ProductViewModel(repo) }
 
     val context = LocalContext.current
     val activity = context as? Activity
 
-    // --- Consistent Background Gradient (from Dashboard/Splash) ---
     val appBackgroundGradient = Brush.verticalGradient(
         colors = listOf(
             Color(0xFF1B4332), // Dark Green
@@ -101,119 +101,146 @@ fun AddProductBody(
         )
     )
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(appBackgroundGradient) // <<< Applied consistent background >>>
-    ) {
-        LazyColumn(
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { }, // No title in the center, as the custom text "Add New Product" is used below
+                navigationIcon = {
+                    IconButton(onClick = {
+                        // Navigate back to DashboardActivity
+                        val intent = Intent(context, DashboardActivity::class.java)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(intent)
+                        activity?.finish() // Finish current activity
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back to Dashboard",
+                            tint = Color.White // Set icon color
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent, // Make top bar transparent
+                    titleContentColor = Color.White // Title color if you were to have one
+                )
+            )
+        }
+    ) { paddingValues ->
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 16.dp), // Increased horizontal padding
-            verticalArrangement = Arrangement.spacedBy(24.dp), // Increased spacing between items
-            horizontalAlignment = Alignment.CenterHorizontally // Center content horizontally
+                .background(appBackgroundGradient)
+                .padding(paddingValues) // Apply padding from Scaffold
         ) {
-            item {
-                Spacer(modifier = Modifier.height(16.dp)) // Top padding
-                // Header
-                Text(
-                    text = "✨ Add New Product",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.ExtraBold, // Made bolder
-                        color = Color.White,
-                        fontSize = 30.sp // Slightly larger
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                    textAlign = TextAlign.Center
-                )
-            }
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                item {
+                    // Header (moved inside LazyColumn, after TopAppBar padding)
+                    Text(
+                        text = "✨ Add New Product",
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White,
+                            fontSize = 30.sp
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
 
-            item {
-                // Enhanced Image Picker
-                EnhancedImagePicker(
-                    selectedImageUri = selectedImageUri,
-                    onPickImage = onPickImage
-                )
-            }
+                item {
+                    EnhancedImagePicker(
+                        selectedImageUri = selectedImageUri,
+                        onPickImage = onPickImage
+                    )
+                }
 
-            item {
-                // Enhanced Text Fields
-                EnhancedTextField(
-                    value = productName,
-                    onValueChange = { productName = it },
-                    placeholder = "Product Name",
-                    icon = Icons.Default.Info,
-                    keyboardType = KeyboardType.Text
-                )
-            }
+                item {
+                    EnhancedTextField(
+                        value = productName,
+                        onValueChange = { productName = it },
+                        placeholder = "Product Name",
+                        icon = Icons.Default.Info,
+                        keyboardType = KeyboardType.Text
+                    )
+                }
 
-            item {
-                EnhancedTextField(
-                    value = productDescription,
-                    onValueChange = { productDescription = it },
-                    placeholder = "Product Description",
-                    icon = Icons.Default.AddCircle,
-                    keyboardType = KeyboardType.Text,
-                    maxLines = 3 // Allows multiline input for description
-                )
-            }
+                item {
+                    EnhancedTextField(
+                        value = productDescription,
+                        onValueChange = { productDescription = it },
+                        placeholder = "Product Description",
+                        icon = Icons.Default.AddCircle,
+                        keyboardType = KeyboardType.Text,
+                        maxLines = 3
+                    )
+                }
 
-            item {
-                EnhancedTextField(
-                    value = productPrice,
-                    onValueChange = { newValue ->
-                        // Only allow valid number input for price
-                        if (newValue.all { it.isDigit() || it == '.' }) {
-                            productPrice = newValue
-                        }
-                    },
-                    placeholder = "Product Price",
-                    icon = Icons.Default.Check,
-                    keyboardType = KeyboardType.Number
-                )
-            }
+                item {
+                    EnhancedTextField(
+                        value = productPrice,
+                        onValueChange = { newValue ->
+                            if (newValue.all { it.isDigit() || it == '.' }) {
+                                productPrice = newValue
+                            }
+                        },
+                        placeholder = "Product Price",
+                        icon = Icons.Default.Check,
+                        keyboardType = KeyboardType.Number
+                    )
+                }
 
-            item {
-                // Enhanced Submit Button
-                EnhancedSubmitButton(
-                    onClick = {
-                        // Check for valid price format before proceeding
-                        val priceDouble = productPrice.toDoubleOrNull()
-                        if (selectedImageUri == null) {
-                            Toast.makeText(context, "Please select an image first", Toast.LENGTH_SHORT).show()
-                        } else if (productName.isBlank() || productDescription.isBlank() || productPrice.isBlank()) {
-                            Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
-                        } else if (priceDouble == null || priceDouble <= 0) {
-                            Toast.makeText(context, "Please enter a valid price", Toast.LENGTH_SHORT).show()
-                        } else {
-                            viewModel.uploadImage(context, selectedImageUri) { imageUrl ->
-                                if (imageUrl != null) {
-                                    val model = ProductModel(
-                                        "", // ID will be generated by Firestore
-                                        productName,
-                                        priceDouble, // Use the parsed double price
-                                        productDescription,
-                                        imageUrl
-                                    )
-                                    viewModel.addProduct(model) { success, message ->
-                                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-                                        if (success) activity?.finish() // Finish activity on success
+                item {
+                    EnhancedSubmitButton(
+                        onClick = {
+                            val priceDouble = productPrice.toDoubleOrNull()
+                            if (selectedImageUri == null) {
+                                Toast.makeText(context, "Please select an image first", Toast.LENGTH_SHORT).show()
+                            } else if (productName.isBlank() || productDescription.isBlank() || productPrice.isBlank()) {
+                                Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
+                            } else if (priceDouble == null || priceDouble <= 0) {
+                                Toast.makeText(context, "Please enter a valid price", Toast.LENGTH_SHORT).show()
+                            } else {
+                                viewModel.uploadImage(context, selectedImageUri) { imageUrl ->
+                                    if (imageUrl != null) {
+                                        val model = ProductModel(
+                                            "",
+                                            productName,
+                                            priceDouble,
+                                            productDescription,
+                                            imageUrl
+                                        )
+                                        viewModel.addProduct(model) { success, message ->
+                                            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                                            if (success) {
+                                                // Navigate back to DashboardActivity on success
+                                                val intent = Intent(context, DashboardActivity::class.java)
+                                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                context.startActivity(intent)
+                                                activity?.finish() // Finish current activity
+                                            }
+                                        }
+                                    } else {
+                                        Log.e("Upload Error", "Failed to upload image to Cloudinary")
+                                        Toast.makeText(context, "Image upload failed. Try again.", Toast.LENGTH_SHORT).show()
                                     }
-                                } else {
-                                    Log.e("Upload Error", "Failed to upload image to Cloudinary")
-                                    Toast.makeText(context, "Image upload failed. Try again.", Toast.LENGTH_SHORT).show()
                                 }
                             }
-                        }
-                    },
-                    // Button is enabled only when all fields are non-blank AND price is a valid number
-                    enabled = productName.isNotBlank() && productDescription.isNotBlank() && productPrice.isNotBlank() && productPrice.toDoubleOrNull() != null
-                )
-            }
-            item {
-                Spacer(modifier = Modifier.height(32.dp)) // Bottom padding
+                        },
+                        enabled = productName.isNotBlank() && productDescription.isNotBlank() && productPrice.isNotBlank() && productPrice.toDoubleOrNull() != null
+                    )
+                }
+                item {
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
             }
         }
     }
@@ -245,13 +272,13 @@ fun EnhancedImagePicker(
             )
             .clickable(
                 interactionSource = interactionSource,
-                indication = null // No ripple effect
+                indication = null
             ) {
                 isPressed = true
                 onPickImage()
             },
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.12f)) // Slightly more opaque
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.12f))
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -267,7 +294,6 @@ fun EnhancedImagePicker(
                     contentScale = ContentScale.Crop
                 )
 
-                // Overlay with camera icon when image is selected
                 Box(
                     modifier = Modifier
                         .size(60.dp)
@@ -279,24 +305,23 @@ fun EnhancedImagePicker(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Add, // Using Add as a camera icon isn't available by default
+                        imageVector = Icons.Default.Add,
                         contentDescription = "Change Image",
                         tint = Color.White,
                         modifier = Modifier.size(30.dp)
                     )
                 }
             } else {
-                // Placeholder content when no image is selected
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
                     val pulseAnimation = rememberInfiniteTransition(label = "pulse")
                     val alpha by pulseAnimation.animateFloat(
-                        initialValue = 0.4f, // Start slightly less transparent
+                        initialValue = 0.4f,
                         targetValue = 1f,
                         animationSpec = infiniteRepeatable(
-                            animation = tween(1200, easing = LinearOutSlowInEasing), // Slightly slower, smoother
+                            animation = tween(1200, easing = LinearOutSlowInEasing),
                             repeatMode = RepeatMode.Reverse
                         ),
                         label = "alpha"
@@ -304,7 +329,7 @@ fun EnhancedImagePicker(
 
                     Box(
                         modifier = Modifier
-                            .size(90.dp) // Larger circle
+                            .size(90.dp)
                             .background(
                                 Color.White.copy(alpha = alpha * 0.3f),
                                 CircleShape
@@ -315,16 +340,16 @@ fun EnhancedImagePicker(
                             imageVector = Icons.Default.Add,
                             contentDescription = "Add Image",
                             tint = Color.White,
-                            modifier = Modifier.size(45.dp) // Larger icon
+                            modifier = Modifier.size(45.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(18.dp)) // Increased spacing
+                    Spacer(modifier = Modifier.height(18.dp))
 
                     Text(
                         text = "Tap to add product image",
-                        color = Color.White.copy(alpha = 0.9f), // Brighter text
-                        fontSize = 17.sp, // Slightly larger font
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -334,7 +359,7 @@ fun EnhancedImagePicker(
 
     LaunchedEffect(isPressed) {
         if (isPressed) {
-            kotlinx.coroutines.delay(100) // Brief delay for visual feedback
+            kotlinx.coroutines.delay(100)
             isPressed = false
         }
     }
@@ -359,12 +384,12 @@ fun EnhancedTextField(
             .shadow(
                 elevation = if (isFocused) 12.dp else 6.dp,
                 shape = RoundedCornerShape(16.dp),
-                ambientColor = Color.Black.copy(alpha = 0.2f), // Darker shadow
-                spotColor = Color.White.copy(alpha = 0.1f) // White spot for highlight
+                ambientColor = Color.Black.copy(alpha = 0.2f),
+                spotColor = Color.White.copy(alpha = 0.1f)
             ),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = if (isFocused) 0.15f else 0.1f) // Background transparency
+            containerColor = Color.White.copy(alpha = if (isFocused) 0.15f else 0.1f)
         )
     ) {
         OutlinedTextField(
@@ -374,36 +399,35 @@ fun EnhancedTextField(
                 Text(
                     text = placeholder,
                     color = Color.White.copy(alpha = 0.7f),
-                    fontSize = 16.sp // Consistent font size
+                    fontSize = 16.sp
                 )
             },
             leadingIcon = {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = Color.White.copy(alpha = 0.85f), // Brighter icon
+                    tint = Color.White.copy(alpha = 0.85f),
                     modifier = Modifier.size(24.dp)
                 )
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp) // Adjusted padding
-                .onFocusChanged { focusState -> isFocused = focusState.isFocused }, // Track focus
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .onFocusChanged { focusState -> isFocused = focusState.isFocused },
             shape = RoundedCornerShape(16.dp),
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
             maxLines = maxLines,
             textStyle = LocalTextStyle.current.copy(
-                color = Color.White, // Input text color
-                fontSize = 16.sp, // Input text font size
+                color = Color.White,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             ),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color.White.copy(alpha = 0.8f),
-                unfocusedBorderColor = Color.Transparent, // No border when unfocused
+                unfocusedBorderColor = Color.Transparent,
                 cursorColor = Color.White,
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.White.copy(alpha = 0.9f),
-                // Additional colors for consistency if needed:
                 disabledTextColor = Color.White.copy(alpha = 0.5f),
                 errorTextColor = Color.Red.copy(alpha = 0.8f),
                 errorBorderColor = Color.Red.copy(alpha = 0.8f)
@@ -428,19 +452,19 @@ fun EnhancedSubmitButton(
 
     val gradientColors = if (enabled) {
         listOf(
-            Color(0xFF4CAF50), // Standard Green
-            Color(0xFF388E3C)  // Darker Green
+            Color(0xFF4CAF50),
+            Color(0xFF388E3C)
         )
     } else {
         listOf(
-            Color.Gray.copy(alpha = 0.6f), // Darker gray for disabled
+            Color.Gray.copy(alpha = 0.6f),
             Color.Gray.copy(alpha = 0.4f)
         )
     }
 
     Button(
         onClick = {
-            if (enabled) { // Only trigger press effect if enabled
+            if (enabled) {
                 isPressed = true
                 onClick()
             }
@@ -451,27 +475,26 @@ fun EnhancedSubmitButton(
             .height(56.dp)
             .scale(scale)
             .shadow(
-                elevation = if (enabled) 12.dp else 4.dp, // Dynamic shadow
+                elevation = if (enabled) 12.dp else 4.dp,
                 shape = RoundedCornerShape(28.dp),
                 ambientColor = Color.Black.copy(alpha = 0.3f),
-                spotColor = Color(0xFF4CAF50).copy(alpha = 0.3f) // Green spot for enabled
+                spotColor = Color(0xFF4CAF50).copy(alpha = 0.3f)
             ),
         shape = RoundedCornerShape(28.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent, // Use Box for gradient background
+            containerColor = Color.Transparent,
             disabledContainerColor = Color.Transparent
         ),
-        contentPadding = PaddingValues(0.dp) // Remove default padding to allow Box to fill
+        contentPadding = PaddingValues(0.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
-                    Brush.horizontalGradient(gradientColors), // Gradient background
+                    Brush.horizontalGradient(gradientColors),
                     RoundedCornerShape(28.dp)
                 )
-                .graphicsLayer { // Ensures the shadow applies correctly to the rounded shape
-                    // This can sometimes help with rendering order for shadows
+                .graphicsLayer {
                     alpha = 0.99f
                 },
             contentAlignment = Alignment.Center
@@ -499,7 +522,7 @@ fun EnhancedSubmitButton(
 
     LaunchedEffect(isPressed) {
         if (isPressed) {
-            kotlinx.coroutines.delay(100) // Brief delay for visual feedback
+            kotlinx.coroutines.delay(100)
             isPressed = false
         }
     }
@@ -509,8 +532,8 @@ fun EnhancedSubmitButton(
 @Preview(showBackground = true)
 @Composable
 fun ProductBodyPreview() {
-    SippureTheme { // Wrap preview in theme
-        AddProductBody(
+    SippureTheme {
+        AddProductScreen(
             selectedImageUri = null,
             onPickImage = {}
         )

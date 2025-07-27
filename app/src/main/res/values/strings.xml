@@ -10,4 +10,6 @@
     <string name="title_activity_search">SearchActivity</string>
     <string name="title_activity_profile">ProfileActivity</string>
     <string name="title_activity_teadetail">TeadetailActivity</string>
+    <string name="title_activity_product_detail">ProductDetailActivity</string>
+    <string name="title_activity_checkout">CheckoutActivity</string>
 </resources>

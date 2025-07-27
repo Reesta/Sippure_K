@@ -10,11 +10,14 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable // Import for clickable modifier
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -50,10 +53,10 @@ class DashboardActivity : ComponentActivity() {
 fun UserDashboard() {
     val context = LocalContext.current
     val activity = context as Activity
-    val email: String? = activity.intent.getStringExtra("email") ?: "Tea Lover"
+    // Use Elvis operator for null safety and capitalize the first part of the email
+    val email: String = activity.intent.getStringExtra("email")?.split('@')?.get(0)?.capitalize() ?: "Tea Lover"
     var isVisible by remember { mutableStateOf(false) }
 
-    // Define the gradient from ProfileActivity
     val profileBackgroundGradient = Brush.verticalGradient(
         colors = listOf(
             Color(0xFF1B4332), // Dark Green
@@ -69,29 +72,32 @@ fun UserDashboard() {
     }
 
     Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    context.startActivity(Intent(context, SearchActivity::class.java))
-                },
-                containerColor = Color(0xFF388E3C), // Keeping this a slightly brighter green
-                contentColor = Color.White,
-                shape = RoundedCornerShape(50)
-            ) {
-                Icon(Icons.Filled.Search, contentDescription = "Search Tea Blends")
-            }
+        topBar = {
+            TopAppBar(
+                title = { /* No title needed here as we have a custom greeting */ },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                actions = {
+                    IconButton(onClick = {
+                        context.startActivity(Intent(context, SearchActivity::class.java))
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "Search",
+                            tint = Color.White
+                        )
+                    }
+                }
+            )
         },
         bottomBar = {
             NavigationBar(
-                // >>> CHANGE MADE HERE <<<
-                // Using a semi-transparent version of the darkest green for a subtle, cohesive look
-                containerColor = Color(0x901B4332), // Alpha 0x90 (144) for ~56% opacity of the dark green
-                contentColor = Color.White, // Keep content (icons/text) white
+                containerColor = Color(0xFF3C8D3F),
+                contentColor = Color.White,
                 tonalElevation = 8.dp
             ) {
                 NavigationBarItem(
                     selected = true,
-                    onClick = { },
+                    onClick = { /* Stay on Dashboard */ },
                     icon = { Icon(painterResource(R.drawable.baseline_home_24), contentDescription = "Home") },
                     label = { Text("Home") }
                 )
@@ -178,32 +184,66 @@ fun UserDashboard() {
 
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(14.dp),
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.weight(1f)
                 ) {
                     items(sampleTeaBlends) { tea ->
-                        FeaturedTeaCard(tea.name, tea.description, tea.imageRes)
+                        // Pass the whole TeaBlend object to the card and define its click behavior
+                        FeaturedTeaCard(tea = tea) { clickedTea ->
+                            // Handle click: Navigate to ProductDetailActivity
+                            val intent = Intent(context, ProductDetailActivity::class.java).apply {
+                                // Pass product details as extras
+                                putExtra("teaName", clickedTea.name)
+                                putExtra("teaDescription", clickedTea.description)
+                                putExtra("teaImageRes", clickedTea.imageRes)
+                                putExtra("teaPrice", clickedTea.price) // Pass the price
+                            }
+                            context.startActivity(intent)
+                        }
                     }
+                }
+            }
+
+            // Plus icon button at the bottom right
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(24.dp)
+            ) {
+                FloatingActionButton(
+                    onClick = {
+                        // Navigate to AddProductActivity
+                        context.startActivity(Intent(context, AddProductActivity::class.java))
+                    },
+                    containerColor = Color(0xFF388E3C),
+                    contentColor = Color.White,
+                    shape = CircleShape,
+                    modifier = Modifier.size(56.dp)
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = "Add Product")
                 }
             }
         }
     }
 }
 
-data class TeaBlend(val name: String, val description: String, val imageRes: Int)
+// Enhanced TeaBlend data class with price
+data class TeaBlend(val name: String, val description: String, val imageRes: Int, val price: Double)
 
 val sampleTeaBlends = listOf(
-    TeaBlend("Chamomile Calm", "Relax with soothing chamomile flowers.", R.drawable.chamomiletea),
-    TeaBlend("Butterfly Fresh", "Invigorate your senses with fresh Flower.", R.drawable.menubutterfly),
-    TeaBlend("Herbal Tea", "Warmth and zest from lemon and ginger.", R.drawable.herbaltea)
+    TeaBlend("Chamomile Calm", "Relax with soothing chamomile flowers. Perfect for unwinding after a long day. Helps promote restful sleep and reduce anxiety.", R.drawable.chamomiletea, 200.00),
+    TeaBlend("Butterfly Fresh", "Invigorate your senses with fresh Butterfly Pea Flower tea. Known for its vibrant blue color and mild, earthy flavor. Great for an antioxidant boost and can change color with citrus!", R.drawable.menubutterfly, 250.00),
+    TeaBlend("Herbal Tea", "Experience warmth and zest from a delightful blend of lemon and ginger. Ideal for soothing colds, aiding digestion, or simply enjoying a refreshing drink.", R.drawable.herbaltea, 200.00),
+    TeaBlend("Hibiscus Tea", "Savor the tart and fruity notes of natural hibiscus extracts. A refreshing and healthy beverage, rich in Vitamin C, and known to support blood pressure.", R.drawable.kotlinhibis, 300.00)
 )
 
 @Composable
-fun FeaturedTeaCard(name: String, description: String, imageRes: Int) {
+fun FeaturedTeaCard(tea: TeaBlend, onClick: (TeaBlend) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(120.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+            .height(120.dp)
+            .clickable { onClick(tea) }, // Make the card clickable
+        colors = CardDefaults.cardColors(containerColor = Color(0x30FFFFFF)), // Semi-transparent white
         elevation = CardDefaults.cardElevation(6.dp),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -212,11 +252,11 @@ fun FeaturedTeaCard(name: String, description: String, imageRes: Int) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
-                painter = painterResource(id = imageRes),
-                contentDescription = name,
+                painter = painterResource(id = tea.imageRes),
+                contentDescription = tea.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(72.dp)
+                    .size(96.dp)
                     .clip(RoundedCornerShape(12.dp))
             )
             Spacer(modifier = Modifier.width(12.dp))
@@ -225,15 +265,23 @@ fun FeaturedTeaCard(name: String, description: String, imageRes: Int) {
                 modifier = Modifier.fillMaxHeight()
             ) {
                 Text(
-                    text = name,
+                    text = tea.name,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = Color(0xFF2E7D32)
+                    color = Color.White
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = description,
+                    text = tea.description,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF4E342E)
+                    color = Color.White.copy(alpha = 0.7f),
+                    maxLines = 2, // Limit lines to keep card height consistent
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis // Add ellipsis for overflow
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Rs. ${String.format("%.2f", tea.price)}", // <--- CHANGED HERE: "Rs. " prefix
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                    color = Color.White
                 )
             }
         }

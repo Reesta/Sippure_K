@@ -203,7 +203,7 @@ fun UserDashboard() {
                 }
             }
 
-            // Plus icon button at the bottom right
+
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)

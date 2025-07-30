@@ -36,7 +36,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.example.sippure.R
-
 import com.example.sippure.viewmodel.UserViewModel
 import kotlinx.coroutines.*
 import kotlin.math.sin
@@ -250,7 +249,11 @@ fun LoginBody() {
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Medium,
                                     textDecoration = TextDecoration.Underline,
-                                    modifier = Modifier.clickable { /* Handle forgot password, perhaps navigate to a new activity */ }
+                                    modifier = Modifier.clickable {
+                                        // Navigate to ForgetPasswordActivity
+                                        context.startActivity(Intent(context, ForgetPasswordActivity::class.java))
+                                        activity?.finish() // Optionally finish LoginActivity if you don't want it on the back stack
+                                    }
                                 )
                             }
 

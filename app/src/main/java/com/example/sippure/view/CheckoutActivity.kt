@@ -42,14 +42,24 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.sippure.ui.theme.SippureTheme
 import com.example.sippure.R
+import com.example.sippure.ui.theme.SippureTheme
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.*
 
 class CheckoutActivity : ComponentActivity() {
+    private lateinit var database: FirebaseDatabase
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Initialize Firebase
+        database = Firebase.database
 
         val productName = intent.getStringExtra("productName") ?: "Selected Product"
         val productPrice = intent.getDoubleExtra("productPrice", 0.0)
@@ -66,16 +76,62 @@ class CheckoutActivity : ComponentActivity() {
                         if (deliveryAddress.isBlank()) {
                             Toast.makeText(this, "Please enter your delivery address.", Toast.LENGTH_SHORT).show()
                         } else {
-                            Toast.makeText(this, "Order Confirmed! Product: $productName, Payment: $selectedPaymentMethod, Delivery to: $deliveryAddress", Toast.LENGTH_LONG).show()
-
-                            val intent = Intent(this, DashboardActivity::class.java)
-                            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                            startActivity(intent)
+                            // ✅ Save order to Firebase Realtime Database
+                            saveOrderToFirebase(
+                                productName = productName,
+                                productPrice = productPrice,
+                                productImageRes = productImageRes,
+                                deliveryAddress = deliveryAddress,
+                                paymentMethod = selectedPaymentMethod
+                            ) { success, message ->
+                                Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+                                if (success) {
+                                    // Navigate to Dashboard
+                                    val intent = Intent(this, DashboardActivity::class.java)
+                                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                                    startActivity(intent)
+                                    finish()
+                                }
+                            }
                         }
                     }
                 )
             }
         }
+    }
+
+    private fun saveOrderToFirebase(
+        productName: String,
+        productPrice: Double,
+        productImageRes: Int,
+        deliveryAddress: String,
+        paymentMethod: String,
+        onComplete: (success: Boolean, message: String) -> Unit
+    ) {
+        // In real app, use FirebaseAuth.getInstance().currentUser?.uid
+        val userId = "user_123"
+        val orderId = database.getReference("orders").push().key ?: return
+
+        val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+
+        val orderData = mapOf(
+            "orderId" to orderId,
+            "productName" to productName,
+            "productPrice" to productPrice,
+            "productImageRes" to productImageRes,
+            "deliveryAddress" to deliveryAddress,
+            "paymentMethod" to paymentMethod,
+            "timestamp" to timestamp
+        )
+
+        database.getReference("orders/$userId/$orderId")
+            .setValue(orderData)
+            .addOnSuccessListener {
+                onComplete(true, "Order confirmed and saved successfully!")
+            }
+            .addOnFailureListener { exception ->
+                onComplete(false, "Failed to save order: ${exception.message}")
+            }
     }
 }
 
@@ -87,12 +143,10 @@ fun AnimatedIcon(
     delay: Int = 0
 ) {
     var visible by remember { mutableStateOf(false) }
-
     LaunchedEffect(Unit) {
         delay(delay.toLong())
         visible = true
     }
-
     AnimatedVisibility(
         visible = visible,
         enter = scaleIn(
@@ -127,7 +181,6 @@ fun PulsingButton(
         ),
         label = "scale"
     )
-
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(
@@ -154,12 +207,10 @@ fun SectionCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     var visible by remember { mutableStateOf(false) }
-
     LaunchedEffect(Unit) {
         delay(delay.toLong())
         visible = true
     }
-
     AnimatedVisibility(
         visible = visible,
         enter = slideInVertically(
@@ -231,7 +282,6 @@ fun CheckoutScreen(
     var deliveryAddress by remember { mutableStateOf("") }
     var selectedPaymentOption by remember { mutableStateOf("Cash on Delivery") }
     val scrollState = rememberScrollState()
-
     val backgroundGradient = Brush.verticalGradient(
         colors = listOf(
             Color(0xFF1B4332),
@@ -277,7 +327,7 @@ fun CheckoutScreen(
                             onClick = onBackClick,
                             modifier = Modifier
                                 .background(
-                                    Color(0xFF1B4332).copy(alpha = 0.8f), // Dark green instead of white
+                                    Color(0xFF1B4332).copy(alpha = 0.8f),
                                     CircleShape
                                 )
                         ) {
@@ -337,7 +387,7 @@ fun CheckoutScreen(
                     }
                 }
 
-                // Product Details Card with enhanced animation
+                // Product Details Card
                 SectionCard(
                     title = "Order Summary",
                     icon = Icons.Default.ShoppingCart,
@@ -352,7 +402,7 @@ fun CheckoutScreen(
                                     .size(160.dp)
                                     .shadow(8.dp, CircleShape)
                                     .clip(CircleShape)
-                                    .background(Color(0xFF2D5016).copy(alpha = 0.8f)) // Darker green
+                                    .background(Color(0xFF2D5016).copy(alpha = 0.8f))
                                     .padding(8.dp)
                             ) {
                                 Image(
@@ -366,7 +416,6 @@ fun CheckoutScreen(
                             }
                             Spacer(modifier = Modifier.height(16.dp))
                         }
-
                         Text(
                             text = productName,
                             style = MaterialTheme.typography.headlineSmall.copy(
@@ -375,13 +424,11 @@ fun CheckoutScreen(
                             color = Color.White,
                             textAlign = TextAlign.Center
                         )
-
                         Spacer(modifier = Modifier.height(12.dp))
-
                         Box(
                             modifier = Modifier
                                 .background(
-                                    Color(0xFF1B4332).copy(alpha = 0.9f), // Darker green instead of bright green
+                                    Color(0xFF1B4332).copy(alpha = 0.9f),
                                     RoundedCornerShape(25.dp)
                                 )
                                 .border(
@@ -440,7 +487,7 @@ fun CheckoutScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFF1B4332).copy(alpha = 0.7f)) // Dark green background
+                            .background(Color(0xFF1B4332).copy(alpha = 0.7f))
                     )
                 }
 
@@ -454,7 +501,7 @@ fun CheckoutScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFF1B4332).copy(alpha = 0.8f)) // Dark green background
+                            .background(Color(0xFF1B4332).copy(alpha = 0.8f))
                             .border(
                                 2.dp,
                                 if (selectedPaymentOption == "Cash on Delivery")
@@ -502,7 +549,7 @@ fun CheckoutScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Enhanced Confirm Button
+                // Confirm Button
                 PulsingButton(
                     onClick = { onConfirmPurchase(selectedPaymentOption, deliveryAddress) },
                     modifier = Modifier

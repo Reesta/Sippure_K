@@ -3,19 +3,19 @@ import org.gradle.kotlin.dsl.implementation
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose) // Ensure this plugin is applied
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.gms.google.services)
-    id("org.jetbrains.kotlin.plugin.parcelize") // <--- ADD THIS LINE FOR KOTLIN PARCELIZE
+    id("org.jetbrains.kotlin.plugin.parcelize") // Enables @Parcelize
 }
 
 android {
     namespace = "com.example.sippure"
-    compileSdk = 35 // Current compileSdk
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.sippure"
         minSdk = 24
-        targetSdk = 35 // Current targetSdk
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -31,21 +31,24 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
+
     buildFeatures {
         compose = true
     }
+
     composeOptions {
-        // IMPORTANT: This version must match the Kotlin version used by your Compose BOM
-        // For compose-bom:2024.04.00, a common compatible version is "1.5.1" or "1.5.10"
-        kotlinCompilerExtensionVersion = "1.5.10" // Recommended for compatibility with recent Compose BOMs and Kotlin
+        kotlinCompilerExtensionVersion = "1.5.10" // Compatible with Compose BOM 2024.04.00
     }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -54,44 +57,42 @@ android {
 }
 
 dependencies {
-    // Core Android libraries
+    // Compose BOM
+    implementation(platform("androidx.compose:compose-bom:2024.04.00"))
+
+    // Core Android
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
 
-    // Compose BOM (Bill of Materials) - manages compatible versions for Compose libraries
-    implementation(platform(libs.androidx.compose.bom)) // Assuming libs.androidx.compose.bom points to "androidx.compose:compose-bom:2024.04.00" or similar
-
-    // Compose UI and Graphics
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-
-    // Compose Material 3 (already present, but ensures it's pulled from BOM)
-    implementation(libs.androidx.material3) // This should be sufficient for Material 3 components
-
-    // ADD THIS LINE FOR EXTENDED MATERIAL ICONS (e.g., Icons.Filled, Icons.Outlined)
+    // Compose Core
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
+    debugImplementation("androidx.compose.ui:ui-tooling")
 
-    // LiveData integration for Compose
-    implementation("androidx.compose.runtime:runtime-livedata:1.6.0") // Keep your existing version
+    // LiveData in Compose
+    implementation("androidx.compose.runtime:runtime-livedata:1.6.0")
 
-    // Third-party image loading libraries (keep existing)
+    // Compose Navigation (optional, for multiple screens)
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+
+    // Firebase BOM (ensures version compatibility)
+    implementation(platform("com.google.firebase:firebase-bom:33.0.0"))
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-database-ktx")
+
+    // Image Libraries
     implementation("com.cloudinary:cloudinary-android:2.1.0")
     implementation("com.squareup.picasso:picasso:2.8")
     implementation("io.coil-kt:coil-compose:2.2.2")
 
-    // Firebase (keep existing)
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.database)
-
-
-    // Testing dependencies (keep existing)
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(platform("androidx.compose:compose-bom:2024.04.00"))
     androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }

@@ -21,10 +21,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.sippure.model.FavouriteTea
 import com.example.sippure.view.ui.theme.SippureTheme
+import com.google.firebase.database.FirebaseDatabase
 
 class FavouriteActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,33 +50,29 @@ fun FavouriteTeaBody() {
     var description by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
-    // Define the SAME gradient as ProfileActivity and DashboardActivity
     val profileBackgroundGradient = Brush.verticalGradient(
         colors = listOf(
-            Color(0xFF1B4332), // Dark Green
-            Color(0xFF2D5016), // Slightly Lighter Green
-            Color(0xFF40601E), // Even Lighter Green
-            Color(0xFF52734D)  // Lightest Green/Grayish Green
+            Color(0xFF1B4332),
+            Color(0xFF2D5016),
+            Color(0xFF40601E),
+            Color(0xFF52734D)
         )
     )
 
-    // Colors for elements *on the white card*
-    val cardContentTextColor = Color(0xFF4A7033) // Dark green for text on white background
-    val cardContentAccentColor = Color(0xFF7AAA54) // A vibrant green for icons/borders on white
-
-    // Color for button (consistent with Dashboard's FAB)
+    val cardContentTextColor = Color(0xFF4A7033)
+    val cardContentAccentColor = Color(0xFF7AAA54)
     val buttonColor = Color(0xFF388E3C)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(profileBackgroundGradient) // <<< BACKGROUND IS NOW THE DARK GRADIENT >>>
+            .background(profileBackgroundGradient)
     ) {
         TopAppBar(
             title = {
                 Text(
                     text = "Favourite Herbal Tea",
-                    color = Color.White, // Top app bar text is WHITE for dark background
+                    color = Color.White,
                     fontWeight = FontWeight.Bold
                 )
             },
@@ -84,7 +81,7 @@ fun FavouriteTeaBody() {
                     Icon(
                         Icons.Default.ArrowBack,
                         contentDescription = "Back",
-                        tint = Color.White // Top app bar icon is WHITE for dark background
+                        tint = Color.White
                     )
                 }
             },
@@ -106,14 +103,14 @@ fun FavouriteTeaBody() {
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.9f) // <<< CARD IS NOW WHITE (OR SLIGHTLY TRANSPARENT WHITE) >>>
+                    containerColor = Color.White.copy(alpha = 0.9f)
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
                         text = "Tea Details",
-                        color = cardContentTextColor, // Adjusted for white card background
+                        color = cardContentTextColor,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -124,18 +121,18 @@ fun FavouriteTeaBody() {
                     OutlinedTextField(
                         value = teaName,
                         onValueChange = { teaName = it },
-                        label = { Text("Tea Name", color = cardContentTextColor.copy(alpha = 0.7f)) }, // Adjusted
-                        placeholder = { Text("Enter your favourite tea", color = cardContentTextColor.copy(alpha = 0.5f)) }, // Adjusted
+                        label = { Text("Tea Name", color = cardContentTextColor.copy(alpha = 0.7f)) },
+                        placeholder = { Text("Enter your favourite tea", color = cardContentTextColor.copy(alpha = 0.5f)) },
                         leadingIcon = {
-                            Icon(Icons.Default.Info, contentDescription = null, tint = cardContentAccentColor) // Adjusted
+                            Icon(Icons.Default.Info, contentDescription = null, tint = cardContentAccentColor)
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = cardContentTextColor, // Adjusted
-                            unfocusedTextColor = cardContentTextColor, // Adjusted
-                            focusedBorderColor = cardContentAccentColor, // Adjusted
-                            unfocusedBorderColor = cardContentTextColor.copy(alpha = 0.3f), // Adjusted
-                            cursorColor = cardContentAccentColor // Adjusted
+                            focusedTextColor = cardContentTextColor,
+                            unfocusedTextColor = cardContentTextColor,
+                            focusedBorderColor = cardContentAccentColor,
+                            unfocusedBorderColor = cardContentTextColor.copy(alpha = 0.3f),
+                            cursorColor = cardContentAccentColor
                         ),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -145,18 +142,18 @@ fun FavouriteTeaBody() {
                     OutlinedTextField(
                         value = teaType,
                         onValueChange = { teaType = it },
-                        label = { Text("Tea Type", color = cardContentTextColor.copy(alpha = 0.7f)) }, // Adjusted
-                        placeholder = { Text("e.g., Green, Chamomile", color = cardContentTextColor.copy(alpha = 0.5f)) }, // Adjusted
+                        label = { Text("Tea Type", color = cardContentTextColor.copy(alpha = 0.7f)) },
+                        placeholder = { Text("e.g., Green, Chamomile", color = cardContentTextColor.copy(alpha = 0.5f)) },
                         leadingIcon = {
-                            Icon(Icons.Default.List, contentDescription = null, tint = cardContentAccentColor) // Adjusted
+                            Icon(Icons.Default.List, contentDescription = null, tint = cardContentAccentColor)
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = cardContentTextColor, // Adjusted
-                            unfocusedTextColor = cardContentTextColor, // Adjusted
-                            focusedBorderColor = cardContentAccentColor, // Adjusted
-                            unfocusedBorderColor = cardContentTextColor.copy(alpha = 0.3f), // Adjusted
-                            cursorColor = cardContentAccentColor // Adjusted
+                            focusedTextColor = cardContentTextColor,
+                            unfocusedTextColor = cardContentTextColor,
+                            focusedBorderColor = cardContentAccentColor,
+                            unfocusedBorderColor = cardContentTextColor.copy(alpha = 0.3f),
+                            cursorColor = cardContentAccentColor
                         ),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -166,20 +163,20 @@ fun FavouriteTeaBody() {
                     OutlinedTextField(
                         value = description,
                         onValueChange = { description = it },
-                        label = { Text("Why you like it", color = cardContentTextColor.copy(alpha = 0.7f)) }, // Adjusted
-                        placeholder = { Text("Describe why this tea is your favourite", color = cardContentTextColor.copy(alpha = 0.5f)) }, // Adjusted
+                        label = { Text("Why you like it", color = cardContentTextColor.copy(alpha = 0.7f)) },
+                        placeholder = { Text("Describe why this tea is your favourite", color = cardContentTextColor.copy(alpha = 0.5f)) },
                         leadingIcon = {
-                            Icon(Icons.Default.Info, contentDescription = null, tint = cardContentAccentColor) // Adjusted
+                            Icon(Icons.Default.Info, contentDescription = null, tint = cardContentAccentColor)
                         },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3,
                         maxLines = 5,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = cardContentTextColor, // Adjusted
-                            unfocusedTextColor = cardContentTextColor, // Adjusted
-                            focusedBorderColor = cardContentAccentColor, // Adjusted
-                            unfocusedBorderColor = cardContentTextColor.copy(alpha = 0.3f), // Adjusted
-                            cursorColor = cardContentAccentColor // Adjusted
+                            focusedTextColor = cardContentTextColor,
+                            unfocusedTextColor = cardContentTextColor,
+                            focusedBorderColor = cardContentAccentColor,
+                            unfocusedBorderColor = cardContentTextColor.copy(alpha = 0.3f),
+                            cursorColor = cardContentAccentColor
                         ),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -196,15 +193,33 @@ fun FavouriteTeaBody() {
                     }
 
                     isLoading = true
-                    Toast.makeText(context, "Favourite tea saved: $teaName", Toast.LENGTH_LONG).show()
-                    isLoading = false
-                    activity?.finish()
+
+                    val database = FirebaseDatabase.getInstance()
+                    val teaRef = database.getReference("favourites")
+
+                    val tea = FavouriteTea(name = teaName, type = teaType, description = description)
+                    val key = teaRef.push().key
+                    if (key != null) {
+                        teaRef.child(key).setValue(tea)
+                            .addOnSuccessListener {
+                                isLoading = false
+                                Toast.makeText(context, "Favourite tea saved!", Toast.LENGTH_LONG).show()
+                                activity?.finish()
+                            }
+                            .addOnFailureListener {
+                                isLoading = false
+                                Toast.makeText(context, "Failed to save tea: ${it.message}", Toast.LENGTH_LONG).show()
+                            }
+                    } else {
+                        isLoading = false
+                        Toast.makeText(context, "Error generating key", Toast.LENGTH_LONG).show()
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 enabled = !isLoading,
-                colors = ButtonDefaults.buttonColors(containerColor = buttonColor), // Adjusted button color
+                colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 if (isLoading) {
@@ -224,13 +239,5 @@ fun FavouriteTeaBody() {
 
             Spacer(modifier = Modifier.height(20.dp))
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun FavouriteTeaBodyPreview() {
-    SippureTheme {
-        FavouriteTeaBody()
     }
 }

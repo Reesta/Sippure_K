@@ -59,6 +59,11 @@ android {
 dependencies {
     // Compose BOM
     implementation(platform("androidx.compose:compose-bom:2024.04.00"))
+    testImplementation("org.mockito:mockito-core:5.6.0")
+    androidTestImplementation("androidx.test:runner:1.2.0")
+    androidTestImplementation("androidx.test:rules:1.2.0")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+
 
     // Core Android
     implementation(libs.androidx.core.ktx)
@@ -95,4 +100,5 @@ dependencies {
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.04.00"))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.test.manifest)
+    testImplementation(kotlin("test"))
 }

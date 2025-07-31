@@ -345,29 +345,29 @@ fun RegistrationScreen() {
                                 }
 
                                 isLoading = true // Start loading
-
-                                userViewModel.register(email, password) { success, message, userId ->
-                                    if (success) {
-                                        val userModel = UserModel(
-                                            userId, email, firstName, lastName,
-                                            "Male", "980805555", selectedCountry
-                                        )
-                                        userViewModel.addUserToDatabase(userId, userModel) { success2, message2 ->
-                                            isLoading = false // Stop loading
-                                            Toast.makeText(context, message2, Toast.LENGTH_LONG).show()
-                                            if (success2) {
-                                                // ✅ Navigate to LoginActivity
-                                                val intent = Intent(context, LoginActivity::class.java)
-                                                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                                                context.startActivity(intent)
-                                                (context as? Activity)?.finish()
-                                            }
-                                        }
-                                    } else {
-                                        isLoading = false // Stop loading on error
-                                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-                                    }
-                                }
+//
+//                                userViewModel.register(email, password) { success, message, userId ->
+//                                    if (success) {
+//                                        val userModel = UserModel(
+//                                            userId, email, firstName, lastName,
+//                                            "Male", "980805555", selectedCountry
+//                                        )
+//                                        userViewModel.addUserToDatabase(userId, userModel) { success2, message2 ->
+//                                            isLoading = false // Stop loading
+//                                            Toast.makeText(context, message2, Toast.LENGTH_LONG).show()
+//                                            if (success2) {
+//                                                // ✅ Navigate to LoginActivity
+//                                                val intent = Intent(context, LoginActivity::class.java)
+//                                                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+//                                                context.startActivity(intent)
+//                                                (context as? Activity)?.finish()
+//                                            }
+//                                        }
+//                                    } else {
+//                                        isLoading = false // Stop loading on error
+//                                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+//                                    }
+//                                }
                             },
                             enabled = !isLoading, // Disable button when loading
                             modifier = Modifier

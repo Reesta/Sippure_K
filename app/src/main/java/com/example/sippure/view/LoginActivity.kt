@@ -23,10 +23,12 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.input.*
@@ -36,7 +38,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.example.sippure.R
+import com.example.sippure.Repository.AuthRepositoryImpl
+import com.example.sippure.viewmodel.AuthViewModel
 import com.example.sippure.viewmodel.UserViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.*
 import kotlin.math.sin
 
@@ -53,8 +58,8 @@ class LoginActivity : ComponentActivity() {
 @Composable
 fun LoginBody() {
 
-    val repo = remember { UserRepositoryImpl() }
-    val userViewModel = remember { UserViewModel(repo) }
+    val repo = remember { AuthRepositoryImpl(FirebaseAuth.getInstance()) }
+    val authViewModel = remember { AuthViewModel(repo) }
 
 
     var email by remember { mutableStateOf("") }
@@ -176,7 +181,7 @@ fun LoginBody() {
                                 onValueChange = { email = it },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .shadow(4.dp, RoundedCornerShape(16.dp)),
+                                    .shadow(4.dp, RoundedCornerShape(16.dp).testag("email")),
                                 placeholder = { Text("Enter your email", color = herbalGreen.copy(alpha = 0.6f)) },
                                 colors = TextFieldDefaults.colors(
                                     focusedContainerColor = Color.White,
@@ -198,7 +203,7 @@ fun LoginBody() {
                                 onValueChange = { password = it },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .shadow(4.dp, RoundedCornerShape(16.dp)),
+                                    .shadow(4.dp, RoundedCornerShape(16.dp).testag("password")),
                                 placeholder = { Text("Enter your password", color = herbalGreen.copy(alpha = 0.6f)) },
                                 colors = TextFieldDefaults.colors(
                                     focusedContainerColor = Color.White,
@@ -263,7 +268,7 @@ fun LoginBody() {
                                 onClick = {
                                     isLoading = true
                                     coroutineScope.launch {
-                                        userViewModel.login(email, password) { success, message ->
+                                        authViewModel.login(email, password) { success, message ->
                                             isLoading = false
                                             if (success) {
                                                 if (rememberMe) {
@@ -290,7 +295,7 @@ fun LoginBody() {
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(56.dp),
+                                    .height(56.dp).testTag("submit"),
                                 shape = RoundedCornerShape(16.dp),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = leafGreen,
@@ -323,6 +328,10 @@ fun LoginBody() {
             }
         }
     }
+}
+
+private fun RoundedCornerShape.testag(string: String): Shape {
+    TODO("Not yet implemented")
 }
 
 @Composable

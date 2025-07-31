@@ -104,7 +104,7 @@ fun AddProductScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { }, // No title in the center, as the custom text "Add New Product" is used below
+                title = { },
                 navigationIcon = {
                     IconButton(onClick = {
                         // Navigate back to DashboardActivity
